@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "issueId": "a13298d8-1bad-4465-b58e-60e37db65ec6",
+  "selections": [
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周新稿直接覆盖多图视觉 token 压缩，并检验了常用注意力重要性假设，适合作为部门核心对照。",
+      "titleZh": "RI-Prune：用跨图关系和信息代表性筛选视觉 token",
+      "oneSentenceZh": "RI-Prune 在解码器之前融合查询相关性、跨图对应和图内代表性，以均衡各图的 token 保留。",
+      "problemZh": "从单图迁移的注意力剪枝容易偏向图像位置，在多图推理中可能删掉跨图比较所需的信息。",
+      "methodZh": "从 projector 输出计算三类信号并进行 z 标准化，再按图执行 Top-K；用逐 token 恢复和删除探针检查注意力分数是否对应真实贡献。",
+      "resultZh": "作者在 Qwen2.5-VL、Qwen3-VL 和 LLaVA-OneVision 及四个多图基准上报告有竞争力的压缩—任务质量权衡；各数据集收益不同，不宣称所有设置均最优。",
+      "contributions": [
+        "提出无需训练、无需注意力权重的多图 token 选择方法。"
+      ],
+      "evidence": [
+        "原始摘要与 11 月 4 日 v1 记录：https://arxiv.org/abs/2611.06047v1。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2611.06047v1；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "作者结果尚未复现；多图基准的优势需要在遥感多时相、多尺度影像上重新验证；会议 Oral 备注不作为本卡已核验事实。"
+      ],
+      "departmentImplication": "建立多时相遥感压缩对照，分别测量跨图关系保留、单图细节和每图预算，避免仅用总 token 数比较。",
+      "confidence": 0.8,
+      "itemId": "7cfbd277-2ea7-44e2-97c8-4dfa522b35c8"
+    },
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周新稿以视觉 token 角色变化解释压缩策略，能与 RI-Prune 形成互补实验。",
+      "titleZh": "BtsPruner：同时保留全局代表与局部细节",
+      "oneSentenceZh": "BtsPruner 追踪视觉编码阶段的 token 角色变化，在固定预算下组合后层全局代表和前层细节证据。",
+      "problemZh": "统一重要性分数忽略 token 的不同作用，过度剪枝可能在保留全局语义时丢失细粒度证据。",
+      "methodZh": "通过注意力集中程度定位角色转变点，从后层识别全局代表，再递归回溯早层局部 token，组合互补信息。",
+      "resultZh": "作者报告 LLaVA-1.5-7B 保留 32/576 个视觉 token 时达到 dense 基线性能的 91.6%；LLaVA-NeXT-7B 的 CUDA 延迟加速最高为 5.95 倍。",
+      "contributions": [
+        "把跨层 token 角色互补性用于无需训练的剪枝。"
+      ],
+      "evidence": [
+        "原始论文摘要与 11 月 3 日提交记录：https://arxiv.org/abs/2611.04537v1。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2611.04537v1；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "91.6% 是基线性能保留率，不是绝对任务准确率；CUDA 延迟不是完整应用端到端延迟；作者实验未复现。"
+      ],
+      "departmentImplication": "在小目标遥感与细粒度问答中比较角色剪枝、纯注意力剪枝和随机选择，单列局部目标召回损失。",
+      "confidence": 0.8,
+      "itemId": "e985351b-1b66-4199-9f7d-130defa21537"
+    },
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 系统性检验 token 合并对解码器的依赖，有助于选择可复用的压缩模块。",
+      "titleZh": "G2TM：检验 token 合并跨解码器的可迁移性",
+      "oneSentenceZh": "G2TM 的系统研究把同一图引导 token 合并模块放入多种分割解码器，区分编码器收益与架构偶然性。",
+      "problemZh": "只在单一网络上测试合并方法，难以判断收益来自合并机制还是特定解码器搭配。",
+      "methodZh": "在 ViT 编码早期插入同一合并模块，比较 Segmenter、SETR、EoMT 及不同解码器，并扩展到图像分类。",
+      "resultZh": "作者在 ADE20K 分割实验报告 GFLOPs 降低 22%–47%、吞吐最高增加 74%；最佳参数更依赖预训练方式和数据集。",
+      "contributions": [
+        "提供跨解码器、跨任务的压缩迁移性对照。"
+      ],
+      "evidence": [
+        "v2 摘要及修订记录：https://arxiv.org/abs/2609.18279v2；本周 11 月 5 日更新。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2609.18279v2；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "结果限于所测骨干和数据集；token 合并节省计算不等于降低图像编码码率，不能直接代替率失真评估。"
+      ],
+      "departmentImplication": "为遥感分割固定编码器并替换解码器，分别验证计算节省、边界质量和小目标误差。",
+      "confidence": 0.8,
+      "itemId": "dccdf5a9-551e-4e78-820a-92f545992c92"
+    },
+    {
+      "section": "primary_topic",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 联合视觉证据选择与推测验证预算，对多模态模型部署有直接工程价值。",
+      "titleZh": "Uni-LaSpec：按视觉证据与负载调整推测解码",
+      "oneSentenceZh": "Uni-LaSpec 给草稿器少量相关视觉 token，并按 GPU 负载选择树形或截短线性验证。",
+      "problemZh": "草稿器忽略图像会降低接受率，读取全部视觉 token 又增加成本；固定验证结构也难以适应不同负载。",
+      "methodZh": "复用上一轮验证查询给量化视觉键排序，通过跨层投票选 token，并以边际成本动态调整每请求、每轮的验证结构。",
+      "resultZh": "作者报告选 8 个视觉 token 可保留全图方案至少 98.6% 的接受表现；单并发贪心解码的多模态吞吐最高为自回归的 3.24 倍。",
+      "contributions": [
+        "把视觉压缩、草稿训练和运行时负载决策联合评估。"
+      ],
+      "evidence": [
+        "原始摘要与 11 月 6 日 v2：https://arxiv.org/abs/2611.01617v2。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2611.01617v2；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "接受表现不能当作任务准确率；最大加速来自特定单并发设置，需另外评估高并发和遥感输入。"
+      ],
+      "departmentImplication": "在多模态 Agent 服务中同时测量任务正确率、接受长度和负载变化下的端到端时延。",
+      "confidence": 0.8,
+      "itemId": "8fb3d897-54f0-4940-ae33-bae39f9b51d0"
+    },
+    {
+      "section": "primary_topic",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 将图结构理解失败拆成表示与输出两层，适合为遥感关系推理设计诊断实验。",
+      "titleZh": "图结构信号已经存在，为何视觉问答仍然失败",
+      "oneSentenceZh": "研究发现节点与边的关系可以从 VLM 隐状态解码，却未必能转化为正确的问答输出。",
+      "problemZh": "模型答错连通性或边方向，不一定意味着视觉编码器没有识别这些信息，仅看最终准确率难以定位瓶颈。",
+      "methodZh": "构造有向图数据集，用线性探针读取节点与边信息，再对隐状态做因果干预，并在流程图上检验发现。",
+      "resultZh": "作者发现部分问答失败的关系信息仍可线性解码，且部分探针信号会因果影响最终预测；表征可读性与输出正确性存在差距。",
+      "contributions": [
+        "把结构信息是否存在与模型是否正确使用信息分开检验。"
+      ],
+      "evidence": [
+        "原文探针与因果干预结果：https://arxiv.org/html/2603.02865；本周 v2：https://arxiv.org/abs/2603.02865v2。"
+      ],
+      "limitations": [
+        "线性可解码不等于模型自然推理时可靠使用；合成图与流程图发现不能直接推广为遥感空间关系能力。"
+      ],
+      "departmentImplication": "给遥感 VLM 增加对象关系探针、输出问答和干预三组对照，区分压缩丢失信息与解码器使用失败。",
+      "confidence": 0.8,
+      "itemId": "6eba75af-d9bd-4992-918f-497c52ef04eb"
+    },
+    {
+      "section": "primary_topic",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 指出低注意力不代表低影响，可直接检验压缩策略是否放大对象幻觉。",
+      "titleZh": "Focus Matters：从 value 侧影响理解视觉幻觉",
+      "oneSentenceZh": "研究在视觉编码聚焦阶段干预低注意力 token 的 value，以较低额外开销减少对象幻觉。",
+      "problemZh": "只看 attention 权重会忽略 value 内容，低权重 token 仍可能对输出产生显著影响。",
+      "methodZh": "分析扩散、聚焦和再扩散阶段，做分阶段 value 干预；使用单次前向统计的图像均值向量替换聚焦阶段的低注意力 value。",
+      "resultZh": "作者在多个 LVLM 骨干上报告对象幻觉指标下降，真实对象证据大体保留，且可与已有推理时方法组合；本卡不补造统一增益比例。",
+      "contributions": [
+        "用 attention 与 value 的联合影响解释干预对象。"
+      ],
+      "evidence": [
+        "已读原始全文中的阶段干预分析：https://arxiv.org/html/2604.03556；v2 于 11 月 7 日更新。"
+      ],
+      "limitations": [
+        "对象幻觉指标不覆盖所有事实错误；对真实视觉证据的保留仍需任务级检查，会议状态未独立核验。"
+      ],
+      "departmentImplication": "将幻觉率纳入视觉 token 压缩实验，比较只按 attention 剪枝与同时考虑 value 影响的策略。",
+      "confidence": 0.8,
+      "itemId": "47326d4e-0e6b-43d9-85fc-0b29f2c5e4c8"
+    },
+    {
+      "section": "primary_topic",
+      "role": "deep_read",
+      "readMinutes": 3,
+      "selectionReason": "本周 v2 给出视觉证据与知识先验冲突的组件级因果分析，有助于理解多模态可靠性。",
+      "titleZh": "视觉与知识冲突时，哪些注意力头改变答案",
+      "oneSentenceZh": "研究发现少量后半层注意力头在所测任务中驱动知识先验覆盖视觉证据，并区分路由与写入作用。",
+      "problemZh": "视觉输入与记忆知识冲突时，模型可能回答先验内容，行为评测不足以确定内部触发机制。",
+      "methodZh": "在残差流、attention head 与 MLP 三个粒度执行 activation patching 和消融，比较视觉导向与先验导向提示。",
+      "resultZh": "作者在三个 VLM 家族中定位约 2.5%–4.8% 的关键头；去除后，先验提示下 68%–96% 的答案转向视觉依据。",
+      "contributions": [
+        "通过定向干预区分视觉与先验的非对称因果结构。"
+      ],
+      "evidence": [
+        "原始 v2 摘要与本周修订记录：https://arxiv.org/abs/2606.28273v2。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2606.28273；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "干预比例限于所测冲突构造和提示，不能认定直接删除这些头就能普遍修复模型。",
+        "主实验以颜色冲突为主，提示词路由仍可能参与观察到的非对称性；作者认为完整的提示与图像交叉设计仍有必要。"
+      ],
+      "departmentImplication": "构造地物外观与常识冲突的测试集，检查压缩和微调是否让模型更依赖先验而忽略实际影像。",
+      "confidence": 0.8,
+      "itemId": "41ec6690-bd8b-4c99-b0ff-44047e3ea453"
+    },
+    {
+      "section": "department_relevance",
+      "role": "deep_read",
+      "readMinutes": 3,
+      "selectionReason": "本周新稿把几何约束与选择性 Agent 通信结合，可借鉴其按信息缺口请求协作的架构。",
+      "titleZh": "按盲区需求触发视觉 Agent 协作",
+      "oneSentenceZh": "该框架结合目标检测、VLM 盲区推理和几何可见性约束，仅对关键遮挡发起对话式感知共享。",
+      "problemZh": "持续全量共享协同感知数据会消耗通信与计算，但并非每个对象或场景都需要协作。",
+      "methodZh": "用传统检测保持基础感知，由 VLM 识别关键遮挡，再以物理几何模块约束可见性，通过对话请求补充信息。",
+      "resultZh": "作者在城市联网车辆数据上报告关键盲区检测准确率超过 80%、对话感知共享成功率超过 90%；这是数据集实验结果。",
+      "contributions": [
+        "把信息缺口识别、几何校验和 Agent 通信串联。"
+      ],
+      "evidence": [
+        "原始论文及 11 月 7 日 v1 提交记录：https://arxiv.org/abs/2611.10819v1。",
+        "补读原文方法、实验设置及结果：https://arxiv.org/html/2611.10819v1；原文提取文本与 SHA-256 已保存到本次运行 evidence 目录。"
+      ],
+      "limitations": [
+        "道路车辆场景与遥感存在明显域差异；摘要数字不等于安全性证明，也没有给出可直接外推的链路节省比例。"
+      ],
+      "departmentImplication": "可设计遥感多 Agent 的按需信息请求原型，以实际任务增益、请求次数和传输量共同评估协作价值。",
+      "confidence": 0.8,
+      "itemId": "3de14e42-d6dc-4be8-bbb5-eacc7d48a330"
+    }
+  ]
+}

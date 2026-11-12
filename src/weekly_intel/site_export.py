@@ -16,6 +16,24 @@ from .utils import display_title, normalize_title
 class SiteDataExportAgent:
     name = "SiteDataExportAgent"
 
+    @staticmethod
+    def _merge_reports(stored: list[dict], current: list[dict]) -> list[dict]:
+        """Keep history when exporting from a partial local database.
+
+        Public preparation remains responsible for filtering unapproved reports.
+        """
+        reports = {
+            (report["issue"]["departmentId"], report["issue"]["isoWeek"]): report
+            for report in stored
+        }
+        for report in current:
+            key = (report["issue"]["departmentId"], report["issue"]["isoWeek"])
+            reports[key] = report
+        return sorted(
+            reports.values(), key=lambda report: report["issue"]["isoWeek"],
+            reverse=True,
+        )
+
     def _issue_payload(
         self, connection: sqlite3.Connection, issue_id: str
     ) -> dict[str, object]:
@@ -188,11 +206,12 @@ class SiteDataExportAgent:
             """,
             (department_id,),
         ).fetchall()
+        stored = json.loads(output.read_text(encoding="utf-8")) if output.exists() else {}
         payload = {
-            "issues": [
+            "issues": self._merge_reports(stored.get("issues", []), [
                 self._issue_payload(connection, row["issue_id"])
                 for row in issues
-            ]
+            ])
         }
         output.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
@@ -212,6 +231,8 @@ class SiteDataExportAgent:
             sources_path=root / "config" / "sources.yaml",
         )
         entries: list[dict[str, object]] = []
+        stored = json.loads(output.read_text(encoding="utf-8")) if output.exists() else {}
+        previous = {entry["id"]: entry for entry in stored.get("departments", [])}
         for department in departments:
             department_id = str(department["department_id"])
             issue_rows = connection.execute(
@@ -227,6 +248,9 @@ class SiteDataExportAgent:
                 self._issue_payload(connection, str(row["issue_id"]))
                 for row in issue_rows
             ]
+            reports = self._merge_reports(
+                previous.get(department_id, {}).get("archive", []), reports
+            )
             page = department.get("page", {})
             output_config = department.get("weekly_output", {})
             entries.append(
@@ -492,6 +516,8 @@ class SiteDataExportAgent:
     def export_sources(
         self, connection: sqlite3.Connection, output: Path
     ) -> Path:
+        stored = json.loads(output.read_text(encoding="utf-8")) if output.exists() else {}
+        previous = {account["sourceId"]: account for account in stored.get("accounts", [])}
         rows = connection.execute(
             """
             SELECT s.source_id, s.name, s.tier, s.homepage_url, s.config_json,
@@ -539,7 +565,22 @@ class SiteDataExportAgent:
             )
             if health == "unchanged":
                 health = "no_recent_update"
-            if not articles:
+            article_payloads = {
+                article["url"]: article
+                for article in previous.get(row["source_id"], {}).get("articles", [])
+            }
+            for article in articles:
+                article_payloads[article["canonical_url"]] = {
+                    "title": display_title(article["canonical_title"]),
+                    "url": article["canonical_url"],
+                    "summary": article["abstract_or_summary"],
+                    "publishedAt": article["first_published_at"],
+                }
+            retained_articles = sorted(
+                article_payloads.values(),
+                key=lambda article: article.get("publishedAt") or "", reverse=True,
+            )[:6]
+            if not retained_articles:
                 continue
             accounts.append(
                 {
@@ -554,15 +595,7 @@ class SiteDataExportAgent:
                     "checkedAt": row["checked_at"],
                     "feedEntries": int(stats.get("feed_entries", 0)),
                     "inWindow": int(stats.get("in_window", 0)),
-                    "articles": [
-                        {
-                            "title": display_title(article["canonical_title"]),
-                            "url": article["canonical_url"],
-                            "summary": article["abstract_or_summary"],
-                            "publishedAt": article["first_published_at"],
-                        }
-                        for article in articles
-                    ],
+                    "articles": retained_articles,
                 }
             )
         output.write_text(

@@ -2,6 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+const departmentData = JSON.parse(await readFile(
+  new URL("../app/department-data.json", import.meta.url), "utf8",
+));
+const sourceData = JSON.parse(await readFile(
+  new URL("../app/source-data.json", import.meta.url), "utf8",
+));
+const currentOrbitinfer = departmentData.departments.find(
+  (department) => department.id === "orbitinfer",
+);
+const htmlText = (text) => text.replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;").replaceAll("'", "&#x27;");
+
 async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
@@ -33,7 +46,7 @@ test("server-renders the research portal", async () => {
   assert.match(html, /按部门进入周报/);
   assert.match(html, /星载大模型/);
   assert.match(html, /星座智算/);
-  assert.match(html, /2026-W36/);
+  assert.ok(html.includes(currentOrbitinfer.currentReport.issue.isoWeek));
   assert.match(html, /周一 09:00 更新/);
   assert.match(html, /顶会与重要论文库/);
   assert.match(html, /og:image/);
@@ -52,7 +65,8 @@ test("server-renders the OrbitInfer department report", async () => {
   assert.match(html, /class="oneSentence"/);
   assert.match(html, /<dt>问题<\/dt>/);
   assert.match(html, /class="translatedTitle">/);
-  assert.match(html, /C²KV/);
+  const firstCard = currentOrbitinfer.currentReport.sections[0].items[0];
+  assert.ok(html.includes(htmlText(firstCard.deepRead.titleZh)));
   assert.doesNotMatch(html, /C\\$\\^2\\$KV/);
   assert.doesNotMatch(html, /顶会动态/);
   assert.doesNotMatch(html, /论文库回看/);
@@ -71,12 +85,14 @@ test("renders the library, source pool, archive and second department", async ()
   }
   assert.match(await library.text(), /Mooncake/);
   const sourceHtml = await sources.text();
-  assert.match(sourceHtml, /PaperWeekly/);
-  assert.doesNotMatch(sourceHtml, /OneFlow/);
-  assert.doesNotMatch(sourceHtml, /DataFunTalk/);
+  for (const account of sourceData.accounts) {
+    assert.ok(sourceHtml.includes(htmlText(account.name)));
+  }
   const archiveHtml = await archive.text();
   assert.match(archiveHtml, /历史周报/);
-  assert.match(archiveHtml, /2026-W30/);
+  for (const report of currentOrbitinfer.archive) {
+    assert.ok(archiveHtml.includes(report.issue.isoWeek));
+  }
   assert.match(await department.text(), /L2/);
 });
 
@@ -97,28 +113,29 @@ test("ships structured report, library and interaction controls", async () => {
 
   assert.equal(departmentPayload.departments.length, 3);
   assert.equal(orbitinfer.enabled, true);
-  assert.equal(payload.issue.isoWeek, "2026-W36");
-  assert.equal(payload.issue.itemCount, 8);
-  const modelDepartment = departmentPayload.departments.find(
-    (department) => department.id === "model_and_application",
-  );
-  assert.equal(modelDepartment.currentReport.issue.itemCount, 8);
-  const constellationDepartment = departmentPayload.departments.find(
-    (department) => department.id === "constellation_simulation",
-  );
-  assert.equal(constellationDepartment.currentReport.issue.itemCount, 0);
-  assert.ok(
-    constellationDepartment.currentReport.trends.includes(
-      "本周无满足范围和证据要求的条目。",
-    ),
-  );
-  assert.equal(
-    departmentPayload.departments.reduce(
-      (total, department) => total + department.currentReport.issue.itemCount,
-      0,
-    ),
-    16,
-  );
+  assert.match(payload.issue.isoWeek, /^\d{4}-W\d{2}$/);
+  for (const department of departmentPayload.departments.filter((d) => d.enabled)) {
+    const report = department.currentReport;
+    assert.ok(report, `${department.id} has a current report`);
+    assert.equal(report.issue.isoWeek, payload.issue.isoWeek);
+    assert.ok(report.issue.itemCount >= department.weeklyOutput.min_items);
+    assert.ok(report.issue.itemCount <= department.weeklyOutput.max_items);
+    assert.ok(report.issue.estimatedReadMinutes <= department.weeklyOutput.target_read_minutes);
+    const cards = report.sections.flatMap((section) => section.items);
+    assert.equal(report.issue.itemCount, cards.length);
+    for (const card of cards) {
+      assert.ok(card.deepRead?.methodZh && card.deepRead?.resultZh);
+      assert.ok(card.deepRead.evidence.length > 0);
+      assert.ok(card.deepRead.confidence >= 0.6);
+      assert.ok(!/^(deterministic|fallback:)/.test(card.deepRead.modelVersion));
+    }
+    if (!cards.length) {
+      assert.ok(report.trends.includes("本周无满足范围和证据要求的条目。"));
+    }
+    const weeks = department.archive.map((entry) => entry.issue.isoWeek);
+    assert.deepEqual(weeks, [...new Set(weeks)].sort().reverse());
+    assert.equal(weeks[0], report.issue.isoWeek);
+  }
   const renderedItemCount = payload.sections.reduce(
     (count, section) => count + section.items.length,
     0,
@@ -137,9 +154,10 @@ test("ships structured report, library and interaction controls", async () => {
   assert.match(page, /setQuery/);
   assert.match(page, /target="_blank"/);
   assert.ok(libraryPayload.papers.length >= 8);
-  assert.equal(sourcePayload.accounts.length, 7);
+  assert.equal(new Set(sourcePayload.accounts.map((account) => account.sourceId)).size,
+    sourcePayload.accounts.length);
   assert.ok(sourcePayload.accounts.every((account) => account.articles.length > 0));
-  assert.equal(orbitinfer.archive[0].issue.isoWeek, "2026-W36");
+  assert.equal(orbitinfer.archive[0].issue.isoWeek, payload.issue.isoWeek);
 });
 
 test("exports a GitHub Pages-compatible static snapshot", async () => {

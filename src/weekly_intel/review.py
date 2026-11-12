@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
+from .config import find_department
 from .db import Database
 from .render import MarkdownRenderAgent
 from .site_export import SiteDataExportAgent
@@ -141,7 +142,9 @@ class ReviewService:
         with self.database.session() as connection:
             issue = connection.execute(
                 """
-                SELECT issue_id, iso_week, status
+                SELECT issue_id, department_id, iso_week, status,
+                       (SELECT COUNT(*) FROM weekly_selections s
+                        WHERE s.issue_id=weekly_issues.issue_id) AS selection_count
                 FROM weekly_issues WHERE issue_id=?
                 """,
                 (issue_id,),
@@ -165,7 +168,18 @@ class ReviewService:
             ).fetchall()
         blockers: list[str] = []
         if not rows:
-            blockers.append("本期没有可审核的精读条目")
+            department = find_department(
+                Path(__file__).resolve().parents[2] / "config" / "departments",
+                str(issue["department_id"]),
+            )
+            allows_empty = (
+                department.get("enabled", True)
+                and department.get("status", "active") == "active"
+                and department.get("weekly_output", {}).get("min_items") == 0
+                and issue["selection_count"] == 0
+            )
+            if not allows_empty:
+                blockers.append("本期没有可审核的精读条目")
         for row in rows:
             title = str(row["canonical_title"])
             model_version = str(row["model_version"] or "")

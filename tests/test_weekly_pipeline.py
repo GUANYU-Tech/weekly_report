@@ -54,6 +54,31 @@ class WeeklyPipelineTest(unittest.TestCase):
             self.assertEqual(payload["issue"]["itemCount"], 0)
             self.assertIn(note, payload["trends"])
 
+            review = ReviewService(database)
+            self.assertTrue(review.approval_readiness(result.issue_id).ready)
+            approved = review.approve_all_and_export(
+                result.issue_id, "test-reviewer", site_data
+            )
+            self.assertEqual(approved.status, "approved")
+
+    def test_empty_required_department_still_blocks_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(__file__).parents[1]
+            database = Database(Path(temp_dir) / "weekly.db")
+            database.initialize(root / "schemas" / "weekly_intel.sql")
+            department = load_yaml(root / "config/departments/orbitinfer.yaml")
+            result = WeeklyPipelineService(database, department).build(
+                "2026-W33", datetime(2026, 8, 9, 16, tzinfo=timezone.utc),
+                datetime(2026, 8, 16, 15, 59, 59, tzinfo=timezone.utc),
+                Path(temp_dir) / "report.md",
+            )
+            review = ReviewService(database)
+            self.assertFalse(review.approval_readiness(result.issue_id).ready)
+            with self.assertRaisesRegex(ValueError, "没有可审核"):
+                review.approve_all_and_export(
+                    result.issue_id, "test-reviewer", Path(temp_dir) / "report.json"
+                )
+
     def test_assess_select_and_render(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(__file__).parents[1]

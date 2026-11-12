@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "issueId": "b71b242e-8964-4d7f-8b80-51a1dfce7746",
+  "selections": [
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 修订直接讨论共享推理批次中的分支并行准入，适合作为 OrbitInfer 的 SLO 调度基线。",
+      "titleZh": "PACE：按批次时延余量调节分支并行",
+      "oneSentenceZh": "PACE 每步限制新增分支造成的时延干扰，在共享前缀 KV 的条件下兼顾并行收益与请求 SLO。",
+      "problemZh": "直接放开分支会拖慢同批次串行请求，固定并行上限又无法跟随负载和上下文变化。",
+      "methodZh": "估计分支对共享 decode 步长的额外开销，仅在当前批次时延余量内准入；逐步重规划并行宽度，利用共享前缀 KV 避免频繁回收内存。",
+      "resultZh": "作者报告 Qwen3-32B 的有效吞吐相对无分支并行提高 1.77 倍、相对立即准入提高 1.48 倍，SLO 达标率为 99%。",
+      "contributions": [
+        "把分支并行的跨请求干扰显式纳入逐步准入控制。"
+      ],
+      "evidence": [
+        "原文摘要及 Table 1：https://arxiv.org/html/2605.06914；去掉余量预算的消融达标率降至 48%。",
+        "版本记录：https://arxiv.org/abs/2605.06914v2；UTC 11 月 1 日 23:01 即北京时间 11 月 2 日，属于 W45。"
+      ],
+      "limitations": [
+        "这是作者实验，未复现；不把 arXiv 的会议备注当作独立核实的录用证据。现有结果不能直接外推到星载功率动态。"
+      ],
+      "departmentImplication": "可在调度器中加入每步时延余量和功率预算约束，并用无分支、固定上限和立即准入作为对照。",
+      "confidence": 0.84,
+      "itemId": "febcb97c-c7b3-46f2-8cc5-f8ca48b6d587"
+    },
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周 v2 更新同时解决混合注意力推测解码的串行依赖和状态内存，贴合星载内存约束。",
+      "titleZh": "Twig：混合注意力模型的并行树验证与低内存状态恢复",
+      "oneSentenceZh": "Twig 将递归状态的树依赖因式分解，并只重建被接受的状态，降低树状推测解码的验证与存储开销。",
+      "problemZh": "线性注意力层存在父子状态依赖，逐节点验证和完整状态快照会随树宽、批量扩大而挤占显存。",
+      "methodZh": "以树结构因式分解实现并行 GPU 验证，将状态更新存成 token 级因子，仅恢复接受路径；运行时再按批次分配验证预算。",
+      "resultZh": "作者报告临时状态内存减少 82–99 倍；离线 decode 吞吐最高达到自回归基线的 4.72 倍、最强树推测基线的 2.03 倍。",
+      "contributions": [
+        "结合 GPU 内核、状态表示与批次验证预算。"
+      ],
+      "evidence": [
+        "原文 Table I 比较完整快照与因子存储：https://arxiv.org/html/2608.01651；摘要给出吞吐对照。",
+        "本周版本为 11 月 5 日的 v2：https://arxiv.org/abs/2608.01651v2。"
+      ],
+      "limitations": [
+        "收益依赖混合注意力结构、树大小和 GPU；HPCA 官网本次返回 403，录用备注未独立核实；未复现实验。"
+      ],
+      "departmentImplication": "可将状态因子化纳入受限显存的推测解码原型，并同时测量峰值状态内存、TTFT 和 TPOT。",
+      "confidence": 0.84,
+      "itemId": "e0060567-4ab5-480b-80a6-72e9dcd45ef8"
+    },
+    {
+      "section": "must_read",
+      "role": "must_read",
+      "readMinutes": 4,
+      "selectionReason": "本周新稿将精度恢复与分层存储联合设计，直接服务低比特、低显存推理的质量与带宽权衡。",
+      "titleZh": "StrataFlux：从分层内存选择性补充低比特推理精度",
+      "oneSentenceZh": "StrataFlux 从主存或 SSD 按需传输精度补充信息，以计算重叠和跨步复用缓解低比特推理的质量损失。",
+      "problemZh": "低比特权重和 KV 能节省显存，却损害质量；直接卸载高精度数据又可能让解码等待传输。",
+      "methodZh": "共同设计精度补充表示、选择与交付流程，减少传输量，将数据传输与计算重叠，并在多个解码步之间复用已取回信息。",
+      "resultZh": "作者摘要报告 RTX 5090 上 2-bit Llama-3.1-8B 的困惑度从 9.46 降至 8.40，同时保持量化基线 95.4% 的吞吐。",
+      "contributions": [
+        "把精度恢复作为可调度的数据移动过程，而非仅调整驻留位宽。"
+      ],
+      "evidence": [
+        "已打开原始摘要与提交历史：https://arxiv.org/abs/2611.08363v1；v1 于 11 月 5 日提交。"
+      ],
+      "limitations": [
+        "HTML 全文接口返回 404，本卡仅依据作者摘要，未核验完整消融、实现和统计误差；不推定已经会议录用。"
+      ],
+      "departmentImplication": "可把补充精度的带宽与能耗作为运行时动作，先比较固定量化、全量卸载和选择性补充的质量—时延边界。",
+      "confidence": 0.7,
+      "itemId": "f82377e9-07ab-4129-a513-97788516c73a"
+    },
+    {
+      "section": "frameworks_benchmarks_datasets",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周正式版本包含超显存 MoE、HiCache 与并行运行时更新，可提供可追踪的工程对照。",
+      "titleZh": "SGLang 0.5.23：分页专家与分层缓存扩展",
+      "oneSentenceZh": "SGLang 本周发布的 0.5.23 扩展超显存 MoE 服务、低时延解码及 MLA 的 L3 前缀缓存支持。",
+      "problemZh": "MoE 权重、长上下文缓存与跨设备通信同时争夺显存和带宽，单纯 CPU 卸载会拖慢交互解码。",
+      "methodZh": "通过可选 Paged Experts 服务超显存 MoE，增加量化专家格式，并让启用 decode context parallelism 的 MLA 模型使用 HiCache 文件层 L3。",
+      "resultZh": "官方发布说明称，在其 16 GB 显卡单流配置中，Paged Experts 比 cpu-offload-gb 快 12–30 倍；该数字是特定配置结果。",
+      "contributions": [
+        "提供可直接定位版本和关联 PR 的 MoE 与缓存实现。"
+      ],
+      "evidence": [
+        "官方版本页更新亮点、Local & Desktop AI：https://github.com/sgl-project/sglang/releases/tag/v0.5.23；关联 PR #42557、#45787、#41187。"
+      ],
+      "limitations": [
+        "部分功能默认关闭，硬件、模型和精度限制需逐项检查；版本说明属于项目方结果，未在星载目标硬件复现。"
+      ],
+      "departmentImplication": "可锁定此版本建立超显存专家调入与三级 KV 缓存基线，测量首 token、持续解码、传输量及峰值功率。",
+      "confidence": 0.86,
+      "itemId": "4410bdfc-d93b-4341-bb92-df181c7df31b"
+    },
+    {
+      "section": "power_reliability_edge_distributed",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周新稿及 v2 更新提供加速器集群效率与互联敏感性证据，可约束分布式推理的成本和能耗假设。",
+      "titleZh": "用高速互联保留低成本加速器的集群效率",
+      "oneSentenceZh": "研究在 Tenstorrent Galaxy 上联合优化通信和解码，展示廉价器件的资源优势何时能转化为集群成本优势。",
+      "problemZh": "单器件便宜不意味着多器件服务更经济：容量迫使模型分布部署，而集合通信可能吞噬收益。",
+      "methodZh": "采用集成通信引擎、流水环传输、通信计算重叠和设备端 decode replay，并比较不同互联条件下的集群效率。",
+      "resultZh": "作者的三年购置加电费模型中，Galaxy 的 tokens/$ 为八卡 RTX PRO 6000 Blackwell 的 1.07–2.24 倍；模拟 TCP 级通信后吞吐下降 23.5%–67.4%。",
+      "contributions": [
+        "以集群成本和互联退化实验检验单芯片效率推论。"
+      ],
+      "evidence": [
+        "原文实验与成本口径：https://arxiv.org/html/2611.02975；版本记录 https://arxiv.org/abs/2611.02975v2，11 月 6 日更新。"
+      ],
+      "limitations": [
+        "结果依赖所用价格、电费、精度和三种 dense 模型；地面互联实验不能证明星间链路下仍有同样优势。"
+      ],
+      "departmentImplication": "在多节点方案评估中应同时约束链路带宽、集合通信占比、每 token 能耗和端到端吞吐。",
+      "confidence": 0.83,
+      "itemId": "f56492b0-befa-4c45-8cf2-98849bd7aa55"
+    },
+    {
+      "section": "kv_storage_moe_quantization",
+      "role": "deep_read",
+      "readMinutes": 4,
+      "selectionReason": "本周新稿的 v2 给出压缩执行开销和真实双节点结果，适合修正只比较 KV 压缩率的评估方式。",
+      "titleZh": "FastKVComp：把压缩吞吐纳入 KV 传输优化",
+      "oneSentenceZh": "FastKVComp 用融合变换量化内核和可搜索无损后端降低压缩开销，使高速链路上的 KV 压缩仍产生收益。",
+      "problemZh": "链路越快，压缩与解压执行时间越容易抵消节省的传输时间，因此压缩率不足以判断端到端价值。",
+      "methodZh": "以 TileLang 融合分布变换与低比特量化，避免中间张量落地；用基于 LC 的可搜索无损算子流水线替换原后端。",
+      "resultZh": "作者报告无损压缩吞吐由低于 90 提升至超过 500 GB/s；200 Gb/s InfiniBand 双节点实验的任务完成时间下降 30.2%–38.6%。",
+      "contributions": [
+        "将压缩数据路径性能与跨节点服务结果共同评估。"
+      ],
+      "evidence": [
+        "已读 v2 全文实验设置及 Figure 3：https://arxiv.org/html/2611.04382v2；使用 RTX PRO 6000 与 H100 双节点。"
+      ],
+      "limitations": [
+        "实验模型主要为 7B/8B，输入最长约 20K；压缩模块吞吐不能等同网络吞吐，也不能把单机最大收益套用双节点。"
+      ],
+      "departmentImplication": "对星间 KV 迁移建立压缩、传输、重构的完整时延预算，并与不压缩和重计算进行端到端对照。",
+      "confidence": 0.85,
+      "itemId": "bcab81f1-69e0-4117-823d-b873ed448e63"
+    },
+    {
+      "section": "power_reliability_edge_distributed",
+      "role": "deep_read",
+      "readMinutes": 3,
+      "selectionReason": "本周 v3 研究丢包链路和硬截止期内的 KV 交接，对动态通信环境具有明确迁移价值。",
+      "titleZh": "PriorityFEC：截止期内优先交付有用的 KV",
+      "oneSentenceZh": "PriorityFEC 按 KV 块效用排序，并动态分配源数据与纠错发送机会，在无法完整传输时保留更多任务信息。",
+      "problemZh": "边缘链路会丢包，接收端又有开始解码的截止期，等待完整 KV 恢复可能已失去任务时效。",
+      "methodZh": "联合效用排序、ACK 滑动流式 FEC 和轻量 Double-DQN 调度，在剩余时间内平衡新增数据交付与丢包修复。",
+      "resultZh": "在两个 7B/8B 模型、三个问答任务的原型实验中，作者报告严格截止期下恢复效用和任务 F1 优于传输基线；放宽截止期后优势收窄。",
+      "contributions": [
+        "把应用层 KV 效用引入截止期感知的纠错调度。"
+      ],
+      "evidence": [
+        "已读 v3 全文 V-A、Figure 4 及 VI：https://arxiv.org/html/2610.21390v3；主要问答设置限制输入为 1536 tokens。"
+      ],
+      "limitations": [
+        "短上下文、地面链路与所测问答任务不代表星间环境；作者未联合优化压缩、淘汰和传输。"
+      ],
+      "departmentImplication": "可作为受接触窗口和丢包约束的 KV 交接基线，并检验效用排序在真实星间轨迹上的泛化。",
+      "confidence": 0.82,
+      "itemId": "fcfc8fd1-7a3e-4b22-8984-05392326755c"
+    },
+    {
+      "section": "power_reliability_edge_distributed",
+      "role": "deep_read",
+      "readMinutes": 3,
+      "selectionReason": "本周 v2 对低精度跨硬件复现性给出机制与明确成本，补充推理可靠性方向。",
+      "titleZh": "HEAL：用误差补偿改善跨硬件推理复现性",
+      "oneSentenceZh": "HEAL 针对内核边界截断误差，结合 INT16 表示与 Tensor Core 误差补偿，降低异构硬件上的输出分歧。",
+      "problemZh": "贪心解码也可能因低精度数值误差在不同 GPU 上产生不同输出，而全局 FP32 的性能成本很高。",
+      "methodZh": "对 Q/K/V 使用不扩大 KV 存储的 INT16 表示，并以 16-bit Tensor Core 上的代数误差补偿近似高精度矩阵乘。",
+      "resultZh": "作者在 MCR-Bench 报告接近 FP32 的功能复现性；但附录明确相对原生 BF16 仍有 70%–120% TPOT 开销。",
+      "contributions": [
+        "同时报告输出复现收益与相对低精度基线的延迟代价。"
+      ],
+      "evidence": [
+        "已读 v2 正文及 Appendix G：https://arxiv.org/html/2606.21023v2；该附录明确不保证逐 bit 确定性。"
+      ],
+      "limitations": [
+        "功能一致性不等于位级确定性；依赖模型校准与硬件优化 GEMM，不能视作辐射软错误容错方案。"
+      ],
+      "departmentImplication": "可扩展可靠推理测试集，区分数值不稳定与硬件软错误，并量化复现性、时延和能耗的代价。",
+      "confidence": 0.85,
+      "itemId": "edcc252f-a2f0-4c93-94e8-e5ab06a024e0"
+    }
+  ]
+}
